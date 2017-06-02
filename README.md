@@ -39,7 +39,7 @@ npm install --save threact
 import * as THREE from 'three';
 import {WebGLRenderer, PointLight, HemisphereLight, Mesh} from 'threact';
 
-class Root extends ReacComponent {
+class Root extends React.Component {
 ...
   render(){
     return (
@@ -77,7 +77,7 @@ class Root extends ReacComponent {
         intensity={0.02} />
         <Mesh 
         geometry={new THREE.PlaneBufferGeometry( 20, 20 )} 
-        material={new THREE.MeshStandardMaterial( {
+        material={new THREE.MeshStandardMaterial({
           roughness: 0.8,
           color: 0xffffff,
           metalness: 0.2,
@@ -86,7 +86,7 @@ class Root extends ReacComponent {
         rotation={[-Math.PI / 2.0, 0, 0]} />
         <Mesh 
         geometry={new THREE.SphereGeometry( 0.5, 32, 32 )}
-        material={new THREE.MeshStandardMaterial( {
+        material={new THREE.MeshStandardMaterial({
           color: 0xffffff,
           roughness: 0.5,
           metalness: 1.0
