@@ -1,6 +1,37 @@
+<p align="center">
+  <a href="https://npmjs.org/package/threact">
+    <img src="https://img.shields.io/npm/v/threact.svg?style=flat-square"
+         alt="NPM Version">
+  </a>
+  <a href="https://travis-ci.org/jaszhix/threact">
+    <img src="https://img.shields.io/travis/jaszhix/threact.svg?style=flat-square"
+         alt="Build Status">
+  </a>
+  <a href="https://npmjs.org/package/threact">
+    <img src="http://img.shields.io/npm/dm/threact.svg?style=flat-square"
+         alt="Downloads">
+  </a>
+
+  <a href="https://david-dm.org/jaszhix/threact.svg">
+    <img src="https://david-dm.org/jaszhix/threact.svg?style=flat-square"
+         alt="Dependency Status">
+  </a>
+
+  <a href="https://github.com/jaszhix/threact/blob/master/LICENSE">
+    <img src="https://img.shields.io/npm/l/threact.svg?style=flat-square"
+         alt="License">
+  </a>
+</p>
+
 ### Simplified Three.JS wrapper for React
 
 The goal of this project is to allow usage of Three.JS in React without modifying Three's API in the conversion process, and to do so without monkey patching React.
+
+### Install Using NPM
+
+```sh
+npm install --save threact
+```
 
 ### Example Usage
 
