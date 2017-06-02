@@ -33,7 +33,7 @@ each(threeModules, (module)=>{
     static defaultProps = {
       width: window.innerWidth,
       height: window.innerHeight,
-      style: this.props.style
+      style: {}
     }
     constructor(props) {
       super(props);
