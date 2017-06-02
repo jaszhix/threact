@@ -1,0 +1,23 @@
+sudo: required
+dist: trusty
+language: node_js
+node_js:
+  - "6.8.1"
+cache:
+  directories:
+    - node_modules
+git:
+    submodules: false
+addons:
+  apt:
+    sources:
+      - google-chrome
+    packages:
+      - google-chrome-stable
+before_install:
+  - export CHROME_BIN=google-chrome-stable
+  - export DISPLAY=:99.0
+  - Xvfb :99.0 -extension RANDR -ac -screen 0 1280x1024x16 > /dev/null &
+  - google-chrome-stable --version
+before_script:
+  - npm run build
