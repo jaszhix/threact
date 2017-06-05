@@ -1,7 +1,9 @@
 const webpack = require('webpack');
 const path = require('path');
+const externals = require('./package.json').dependencies;
 
 const webpackConfig = {
+  externals: Object.keys(externals),
   entry: path.join(__dirname, 'src/index'),
   output: {
     path: path.join(__dirname, 'dist'),
@@ -11,8 +13,8 @@ const webpackConfig = {
   resolve: {
     extensions: ['.js', '.jsx', '.json'],
     modules: [
-      path.join(__dirname, 'src'),
       path.resolve('node_modules'),
+      path.join(__dirname, 'src'),
     ],
   },
   context: path.resolve(__dirname, 'src'),
@@ -35,7 +37,7 @@ const webpackConfig = {
               ['transform-runtime', {helpers: false, polyfill: true, regenerator: true}]
             ],
             ignore: [
-              './dist/index.js',
+              './dist/index.js'
             ]
           }
         }
@@ -52,8 +54,7 @@ const webpackConfig = {
         NODE_ENV: JSON.stringify('production')
       }
     }),
-  ],
-  target: 'web',
+  ]
 };
 
 module.exports = webpackConfig;

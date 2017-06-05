@@ -1,6 +1,7 @@
 import 'source-map-support/browser-source-map-support';
 import chai from 'chai';
 import dirtyChai from 'dirty-chai';
+import * as THREE from 'three';
 import t from '../../dist/index';
 const { expect } = chai;
 const threeModules = Object.keys(THREE);

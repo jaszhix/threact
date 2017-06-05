@@ -1,15 +1,22 @@
-import 'expose-loader?React!react';
-import 'expose-loader?ReactDOM!react-dom';
-import 'expose-loader?THREE!three';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import * as THREE from 'three';
 import autoBind from 'react-autobind';
 import {WebGL2Renderer} from 'three/src/renderers/WebGL2Renderer';
 THREE.WebGL2Renderer = WebGL2Renderer;
-import EffectComposer, {RenderPass, ShaderPass, CopyShader} from 'three-effectcomposer-es6'
+import Stats from 'stats.js';
+import WebGLDeferredRenderer from './libs/WebGLDeferredRenderer';
+THREE.WebGLDeferredRenderer = WebGLDeferredRenderer;
+import {EffectComposer} from './libs/EffectComposer';
+import RenderPass from './libs/RenderPass';
+import ShaderPass from './libs/ShaderPass';
+import CopyShader from './libs/CopyShader';
 import CreateControls from 'orbit-controls';
 import _ from 'lodash';
 import each from './each';
+import defaults from './defaults';
 
-const threeModules = Object.keys(THREE);
+const threeComponents = Object.keys(THREE);
 const components = {};
 
 // Based on https://stackoverflow.com/questions/1007981/how-to-get-function-parameter-names-values-dynamically-from-javascript
@@ -24,24 +31,26 @@ const getParamNames = function(func) {
   return result;
 }
 
-each(threeModules, (module)=>{
-  if (typeof THREE[module] !== 'function') {
+each(threeComponents, (component)=>{
+  if (typeof THREE[component] !== 'function') {
     return;
   }
-  components[module] = class extends React.PureComponent {
-    static displayName = module;
+  components[component] = class extends React.PureComponent {
+    static displayName = component;
     static defaultProps = {
       width: window.innerWidth,
       height: window.innerHeight,
-      style: {}
+      style: {},
+      stats: null
     }
     constructor(props) {
       super(props);
       autoBind(this);
 
-      this.name = module;
-      this.moduleParams = getParamNames(THREE[module]);
+      this.name = component;
+      this.moduleParams = getParamNames(THREE[component]);
       this.isRenderer = false;
+      this.stats = null;
       this.controlsProps = ['onMouseMove', 'onMouseDown', 'onResize', 'onKeyUp', 'onKeyPress', 'onKeyDown'];
 
       this.init();
@@ -52,10 +61,10 @@ each(threeModules, (module)=>{
       let rendererProps = ['canvas', 'context', 'precision', 'alpha', 'premultipliedAlpha', 'antialias', 'stencil', 'preserveDrawingBuffer', 'depth', 'logarithmicDepthBuffer'];
       let sceneProps = ['fog', 'overrideMaterial', 'autoUpdate'];
       let cameraProps = ['layers', 'matrixWorldInverse', 'projectionMatrix'];
-      let nonParamProps = ['passes', 'parent', 'renderer', 'scene', 'camera', 'controls', 'skybox', 'anisotropy', 'onAnimate', 'onMount', 'name', 'children', 'addCallback'];
+      let nonParamProps = ['stats', 'shaders', 'passes', 'parent', 'renderer', 'scene', 'camera', 'controls', 'skybox', 'anisotropy', 'onAnimate', 'onMount', 'name', 'children', 'addCallback', 'width', 'height', 'style'];
 
       each(this.props, (value, key)=>{
-        if (nonParamProps.indexOf(key) === -1 && cameraProps.indexOf(key) === -1 && this.controlsProps.indexOf(key) === -1 ) {
+        if ((nonParamProps.indexOf(key) === -1 && cameraProps.indexOf(key) === -1 && this.controlsProps.indexOf(key) === -1) || (!this.isRenderer && defaults[component] && typeof defaults[component][key] !== 'undefined')) {
           if (key.slice(0, 3) === 'set') {
             setProps[key] = value;
           } else {
@@ -66,18 +75,20 @@ each(threeModules, (module)=>{
 
       let instance;
       if (this.moduleParams.length === 0) {
-        instance = new THREE[module]();
+        instance = new THREE[component]();
       } else {
         let params = [];
         each(this.moduleParams, (param)=>{
           if (typeof pureProps[param] !== 'undefined') {
             params.push(pureProps[param]);
+          } else if (defaults[component] && typeof defaults[component][param] !== 'undefined') {
+            params.push(defaults[component][param]);
           }
         });
         if (params.length === 0) {
-          instance = new THREE[module](pureProps);
+          instance = new THREE[component](pureProps);
         } else {
-          instance = new THREE[module](...params);
+          instance = new THREE[component](...params);
         }
         this.isRenderer = instance.hasOwnProperty('domElement');
         let instanceProps = [];
@@ -87,9 +98,13 @@ each(threeModules, (module)=>{
           }
         });
         each(instanceProps, (prop)=>{
-          if (Array.isArray(pureProps[prop])) {
-            instance[prop].set(...pureProps[prop]);
-          } else {
+          try {
+            if (Array.isArray(pureProps[prop])) {
+              instance[prop].set(...pureProps[prop]);
+            } else {
+              throw new Error();
+            }
+          } catch (e) {
             instance[prop] = pureProps[prop];
           }
         });
@@ -97,9 +112,11 @@ each(threeModules, (module)=>{
       this.instance = instance;
 
       if (this.isRenderer) {
-        this.anisotropy = this.props.anisotropy ? this.props.anisotropy : instance.getMaxAnisotropy();
+        this.anisotropy = this.props.anisotropy ? this.props.anisotropy : null//instance.getMaxAnisotropy();
         each(setProps, (value, key)=>{
-          instance[key](...value);
+          try {
+            instance[key](...value);
+          } catch (e) {}
         });
         this.scene = new THREE.Scene();
         each(sceneProps, (propKey)=>{
@@ -130,21 +147,34 @@ each(threeModules, (module)=>{
           }
         });
         this.callbacks = [];
-        if (this.props.passes && Array.isArray(this.props.passes) && this.props.passes.length > 0) {
+        if (this.props.shaders || this.props.passes) {
           this.usesComposer = true;
           this.composer = new EffectComposer(this.instance);
           this.composer.addPass(new RenderPass(this.scene, this.camera));
-          this.passes = this.props.passes;
-          each(this.passes, (pass)=>{
-            let copyPass = new ShaderPass(pass);
-            copyPass.renderToScreen = true;
-            this.composer.addPass(copyPass);
-          });
+          if (Array.isArray(this.props.shaders) && this.props.shaders.length > 0) {
+            this.shaders = this.props.shaders;
+            each(this.shaders, (shader)=>{
+              let copyPass = new ShaderPass(shader);
+              copyPass.renderToScreen = true;
+              this.composer.addPass(copyPass);
+            });
+          }
+          if (Array.isArray(this.props.passes) && this.props.passes.length > 0) {
+            this.passes = this.props.passes;
+            each(this.passes, (pass)=>{
+              this.composer.addPass(pass);
+            });
+          }
         }
         if (this.props.skybox && Array.isArray(this.props.skybox)) {
           var textureCube = new THREE.CubeTextureLoader().load(this.props.skybox);
           textureCube.anisotropy = this.anisotropy;
           this.scene.background = textureCube;
+        }
+        if (this.props.stats !== null) {
+          this.stats = new Stats();
+          this.stats.showPanel(this.props.stats);
+          document.body.appendChild(this.stats.dom);
         }
       } else if (this.props.parent) {
         this.renderer = this.props.renderer;
@@ -157,6 +187,9 @@ each(threeModules, (module)=>{
         this.instance.name = this.props.name;
       }
     }
+    componentWillMount() {
+      this.handleMountCallback()
+    }
     componentDidMount() {
       if (process.env.NODE_ENV === 'development') {
         // react-hot-loader fix borrowed from react-three
@@ -164,7 +197,6 @@ each(threeModules, (module)=>{
           this._reactInternalInstance._renderedComponent._renderedChildren = this._renderedChildren;
         }
       }
-      this.handleMountCallback()
       if (this.isRenderer) {
         this.domElement = ReactDOM.findDOMNode(this);
         this.domElement.style = Object.assign({width: this.props.width, height: this.props.height}, this.props.style)
@@ -179,9 +211,15 @@ each(threeModules, (module)=>{
         if (this._reactInternalInstance._renderedComponent._currentElement !== null) {
           this._reactInternalInstance._renderedComponent._renderedChildren = this._renderedChildren;
         }
+        if (module.hot) {
+          this.unmountThree();
+        }
       }
     }
     componentWillUnmount(){
+      this.unmountThree();
+    }
+    unmountThree(){
       if (process.env.NODE_ENV === 'development') {
         // react-hot-loader fix borrowed from react-three
         if (this._reactInternalInstance._renderedComponent._currentElement !== null) {
@@ -190,6 +228,9 @@ each(threeModules, (module)=>{
       }
       if (!this.isRenderer) {
         this.scene.remove(this.instance);
+        if (typeof this.instance.dispose === 'function') {
+          this.instance.dispose();
+        }
         return;
       }
       each(this.controlsProps, (propKey)=>{
@@ -201,15 +242,18 @@ each(threeModules, (module)=>{
         }
       });
     }
-    renderThree(){
+    renderThree(time){
       window.requestAnimationFrame(this.renderThree);
+      if (this.stats !== null) {
+        this.stats.begin();
+      }
       this.updateControls();
       if (this.callbacks && this.callbacks.length > 0) {
         each(this.callbacks, (cbObject)=>{
           if (Array.isArray(cbObject.param)) {
             cbObject.cb(...cbObject.params);
           } else {
-            cbObject.cb(cbObject.params);
+            cbObject.cb(cbObject.params, time);
           }
         });
       }
@@ -217,6 +261,9 @@ each(threeModules, (module)=>{
         this.composer.render()
       } else {
         this.instance.render(this.scene, this.camera);
+      }
+      if (this.stats !== null) {
+        this.stats.end();
       }
     }
     handleResize(){

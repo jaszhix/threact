@@ -43,13 +43,13 @@ class Root extends React.Component {
 ...
   render(){
     return (
-      <WebGLRenderer 
+      <WebGLRenderer
       physicallyCorrectLights={true}
       gammaInput={true}
       gammaOutput={true}
       shadowMap={{enabled: true}}
       toneMapping={THREE.ReinhardToneMapping}
-      antialias={true} 
+      antialias={true}
       bgColor={0x00a1ff}
       setPixelRatio={window.devicePixelRatio}
       setSize={[window.innerWidth, window.innerHeight]}
@@ -71,12 +71,12 @@ class Root extends React.Component {
           position={[0, 0, 0]}
           rotation={[- Math.PI / 2, 0, 0]}/>
         </PointLight>
-        <HemisphereLight 
+        <HemisphereLight
         skyColor={0xddeeff}
         groundColor={0x0f0e0d}
         intensity={0.02} />
-        <Mesh 
-        geometry={new THREE.PlaneBufferGeometry( 20, 20 )} 
+        <Mesh
+        geometry={new THREE.PlaneBufferGeometry( 20, 20 )}
         material={new THREE.MeshStandardMaterial({
           roughness: 0.8,
           color: 0xffffff,
@@ -84,7 +84,7 @@ class Root extends React.Component {
           bumpScale: 0.0005
         })}
         rotation={[-Math.PI / 2.0, 0, 0]} />
-        <Mesh 
+        <Mesh
         geometry={new THREE.SphereGeometry( 0.5, 32, 32 )}
         material={new THREE.MeshStandardMaterial({
           color: 0xffffff,
@@ -111,8 +111,10 @@ class Root extends React.Component {
   * ```controls```: Function. Override the default controls scheme. By default, this uses the ```orbit-controls``` package.
   * ```camera```: Function. Override the default camera scheme. By default, this uses the ```PerspectiveCamera```.
   * ```skybox```: Array. Sets the scene background using ```CubeTextureLoader```. Expects an array of six image paths.
-  * ```passes```: Array. Loads extra shaders for post processing. This uses the ```EffectComposer``` extension.
+  * ```passes```: Array. Loads extra passes for post processing. This uses the ```EffectComposer``` extension.
+  * ```shaders```: Array. Loads extra shaders for post processing. This uses the ```EffectComposer``` extension with ```ShaderPass```.
   * ```anisotropy```: Integer (1-16) Overrides the default anisotropy setting, which is the renderer's max.
+  * ```stats```: Integer. Adds performance monitoring with the ```stats.js``` package. Valid options include 0 (FPS), 1 (MS), and 2 (RAM).
   * ```onMouseMove```: Function.
   * ```onMouseDown```: Function.
   * ```onResize```: Function.
@@ -124,6 +126,8 @@ class Root extends React.Component {
 
   * ```onMount```: Function. Called after the first render.
   * ```onAnimate```: Function. Called on each Three render.
+
+  Callback parameters include ```instance```, ```renderer```, ```scene```, ```camera```, and ```controls```.
 
 ### Todo
 
