@@ -76,6 +76,7 @@
     "enzyme-to-json": "^1.5.1",
     "eslint": "*",
     "exports-loader": "^0.6.3",
+    "expose-loader": "^0.7.3",
     "gulp": "gulpjs/gulp#4.0",
     "gulp-cached": "^1.1.1",
     "gulp-util": "3.0.8",

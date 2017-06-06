@@ -1,16 +1,16 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import * as THREE from 'three';
+import 'expose-loader?React!react';
+import 'expose-loader?ReactDOM!react-dom';
+import 'expose-loader?THREE!three';
 import autoBind from 'react-autobind';
 import {WebGL2Renderer} from 'three/src/renderers/WebGL2Renderer';
 THREE.WebGL2Renderer = WebGL2Renderer;
 import Stats from 'stats.js';
-import WebGLDeferredRenderer from './libs/WebGLDeferredRenderer';
-THREE.WebGLDeferredRenderer = WebGLDeferredRenderer;
 import {EffectComposer} from './libs/EffectComposer';
 import RenderPass from './libs/RenderPass';
 import ShaderPass from './libs/ShaderPass';
 import CopyShader from './libs/CopyShader';
+import WebGLDeferredRenderer from './libs/WebGLDeferredRenderer';
+THREE.WebGLDeferredRenderer = WebGLDeferredRenderer;
 import CreateControls from 'orbit-controls';
 import _ from 'lodash';
 import each from './each';
@@ -137,6 +137,7 @@ each(threeComponents, (component)=>{
           phi: 70 * Math.PI / 180,
           zoomSpeed: 0.7
         });
+        this.controls.needsUpdate = true;
         this.target = new THREE.Vector3();
         each(this.controlsProps, (propKey)=>{
           if (propKey === 'onResize') {
@@ -276,6 +277,14 @@ each(threeComponents, (component)=>{
       this.updateControls();
     }
     updateControls(){
+      if (typeof this.props.updateControls === 'function') {
+        this.props.updateControls(this);
+        return;
+      }
+
+      if (!this.controls.needsUpdate) {
+        return;
+      }
       let width = window.innerWidth;
       let height = window.innerHeight;
       let aspect = width / height;
@@ -373,3 +382,4 @@ each(threeComponents, (component)=>{
 });
 
 export default components;
+

@@ -28,8 +28,6 @@ const webpackConfig = {
           options: {
             cacheDirectory: true,
             plugins: [
-              'add-module-exports',
-              'dynamic-import-webpack',
               'transform-decorators-legacy',
               'transform-class-properties',
               'transform-object-rest-spread',

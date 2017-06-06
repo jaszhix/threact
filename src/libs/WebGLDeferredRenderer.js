@@ -44,7 +44,7 @@ THREE.CopyShader = CopyShader;
 import FXAAShader from './FXAAShader';
 THREE.FXAAShader = FXAAShader;
 
-THREE.WebGLDeferredRenderer = function ( parameters ) {
+var WebGLDeferredRenderer = function ( parameters ) {
 
 	parameters = parameters || {};
 
@@ -2533,4 +2533,4 @@ THREE.ShaderDeferred = {
 
 };
 
-export default THREE.WebGLDeferredRenderer;
+export default WebGLDeferredRenderer;

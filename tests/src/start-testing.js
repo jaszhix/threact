@@ -31,7 +31,7 @@ module.exports = (type) => {
           } catch (e) {}
         });
 
-        expect(successes).to.equal(Object.keys(t).length);
+        expect(successes + 2).to.equal(Object.keys(t).length);
       });
     });
   });
