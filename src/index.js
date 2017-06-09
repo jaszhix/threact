@@ -41,12 +41,16 @@ each(threeComponents, (component)=>{
       width: window.innerWidth,
       height: window.innerHeight,
       style: {},
-      stats: null
+      stats: null,
+      deferred: false
     }
     constructor(props) {
       super(props);
       autoBind(this);
 
+      if (this.props.deferred) {
+        component = 'WebGLDeferredRenderer';
+      }
       this.name = component;
       this.moduleParams = getParamNames(THREE[component]);
       this.isRenderer = false;
@@ -61,7 +65,7 @@ each(threeComponents, (component)=>{
       let rendererProps = ['canvas', 'context', 'precision', 'alpha', 'premultipliedAlpha', 'antialias', 'stencil', 'preserveDrawingBuffer', 'depth', 'logarithmicDepthBuffer'];
       let sceneProps = ['fog', 'overrideMaterial', 'autoUpdate'];
       let cameraProps = ['layers', 'matrixWorldInverse', 'projectionMatrix'];
-      let nonParamProps = ['stats', 'shaders', 'passes', 'parent', 'renderer', 'scene', 'camera', 'controls', 'skybox', 'anisotropy', 'onAnimate', 'onMount', 'name', 'children', 'addCallback', 'width', 'height', 'style'];
+      let nonParamProps = ['deferred', 'stats', 'shaders', 'passes', 'parent', 'renderer', 'scene', 'camera', 'controls', 'skybox', 'anisotropy', 'onAnimate', 'onMount', 'name', 'children', 'addCallback', 'width', 'height', 'style'];
 
       each(this.props, (value, key)=>{
         if ((nonParamProps.indexOf(key) === -1 && cameraProps.indexOf(key) === -1 && this.controlsProps.indexOf(key) === -1) || (!this.isRenderer && defaults[component] && typeof defaults[component][key] !== 'undefined')) {
