@@ -377,7 +377,7 @@ each(threeComponents, (component)=>{
     render(){
       let children = this.handleChildren();
       return (
-        <threact ref={this.name}>
+        <threact>
           {children}
         </threact>
       );
