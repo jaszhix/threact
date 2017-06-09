@@ -108,6 +108,8 @@ class Root extends React.Component {
 
   * ```width```: Integer. Sets the canvas and renderer width.
   * ```height```: Integer. Sets the canvas and renderer height.
+  * ```style```: Object. Sets the canvas style.
+  * ```deferred```: Boolean. Controls whether or not ```WebGLDeferredRenderer``` is used.
   * ```controls```: Function. Override the default controls scheme. By default, this uses the ```orbit-controls``` package.
   * ```camera```: Function. Override the default camera scheme. By default, this uses the ```PerspectiveCamera```.
   * ```skybox```: Array. Sets the scene background using ```CubeTextureLoader```. Expects an array of six image paths.

@@ -135,7 +135,7 @@ each(threeComponents, (component)=>{
           }
         });
         this.controls = this.props.controls ? this.props.controls : CreateControls({
-          canvas: this.instance.domElement,
+          element: this.instance.domElement,
           distanceBounds: [1, 10000],
           distance: 2.5,
           phi: 70 * Math.PI / 180,
@@ -148,7 +148,8 @@ each(threeComponents, (component)=>{
             window.addEventListener('resize', this.handleResize);
           }
           if (typeof this.props[propKey] === 'function') {
-            window.addEventListener(propKey.slice(2).toLowerCase(), this.props[propKey]);
+            let domElement = propKey === 'onMouseMove' ? window : this.instance.domElement;
+            domElement.addEventListener(propKey.slice(2).toLowerCase(), this.props[propKey]);
           }
         });
         this.callbacks = [];
@@ -204,7 +205,10 @@ each(threeComponents, (component)=>{
       }
       if (this.isRenderer) {
         this.domElement = ReactDOM.findDOMNode(this);
-        this.domElement.style = Object.assign({width: this.props.width, height: this.props.height}, this.props.style)
+        let style = Object.assign({width: this.props.width, height: this.props.height}, this.props.style);
+        each(style, (value, key)=>{
+          this.instance.domElement.style[key] = value;
+        });
         this.domElement.appendChild(this.instance.domElement);
         this.renderThree();
       }
@@ -219,6 +223,14 @@ each(threeComponents, (component)=>{
         if (module.hot) {
           this.unmountThree();
         }
+      }
+    }
+    componentWillReceiveProps(nextProps) {
+      if (!this.isRenderer) {
+        return;
+      }
+      if (nextProps.height !== this.props.height || nextProps.width !== this.props.width) {
+        this.handleResize();
       }
     }
     componentWillUnmount(){
@@ -237,7 +249,7 @@ each(threeComponents, (component)=>{
           this.instance.dispose();
         }
         return;
-      }
+      } else
       each(this.controlsProps, (propKey)=>{
         if (typeof this.props[propKey] === 'function') {
           window.removeEventListener(propKey.slice(2).toLowerCase(), this.props[propKey]);
@@ -272,11 +284,13 @@ each(threeComponents, (component)=>{
       }
     }
     handleResize(){
-      this.instance.setSize(window.innerWidth, window.innerHeight);
-      this.instance.domElement.style.width = window.innerWidth;
-      this.instance.domElement.style.height = window.innerHeight;
+      this.instance.setSize(this.props.width, this.props.height);
+      this.instance.domElement.style = Object.assign(this.instance.domElement.style, {
+        width: this.props.width,
+        height: this.props.height
+      });
       if (this.usesComposer) {
-        this.composer.setSize(window.innerWidth, window.innerHeight);
+        this.composer.setSize(this.props.width, this.props.height);
       }
       this.updateControls();
     }
@@ -289,8 +303,8 @@ each(threeComponents, (component)=>{
       if (!this.controls.needsUpdate) {
         return;
       }
-      let width = window.innerWidth;
-      let height = window.innerHeight;
+      let width = this.props.width;
+      let height = this.props.height;
       let aspect = width / height;
 
       // update camera controls
