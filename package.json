@@ -1,6 +1,6 @@
 {
   "name": "threact",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "A simple, API agnostic, three.js wrapper for React.",
   "main": "dist/index.js",
   "files": [
