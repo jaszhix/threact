@@ -205,10 +205,7 @@ each(threeComponents, (component)=>{
       }
       if (this.isRenderer) {
         this.domElement = ReactDOM.findDOMNode(this);
-        let style = Object.assign({width: this.props.width, height: this.props.height}, this.props.style);
-        each(style, (value, key)=>{
-          this.instance.domElement.style[key] = value;
-        });
+        this.handleStyle(this.props);
         this.domElement.appendChild(this.instance.domElement);
         this.renderThree();
       }
@@ -231,6 +228,9 @@ each(threeComponents, (component)=>{
       }
       if (nextProps.height !== this.props.height || nextProps.width !== this.props.width) {
         this.handleResize();
+      }
+      if (!_.isEqual(nextProps.style, this.props.style)) {
+        this.handleStyle(nextProps);
       }
     }
     componentWillUnmount(){
@@ -283,12 +283,16 @@ each(threeComponents, (component)=>{
         this.stats.end();
       }
     }
+    handleStyle(props){
+      let style = Object.assign({width: props.width, height: props.height}, props.style);
+      each(style, (value, key)=>{
+        this.instance.domElement.style[key] = value;
+      });
+    }
     handleResize(){
       this.instance.setSize(this.props.width, this.props.height);
-      this.instance.domElement.style = Object.assign(this.instance.domElement.style, {
-        width: this.props.width,
-        height: this.props.height
-      });
+      this.handleStyle(this.props);
+
       if (this.usesComposer) {
         this.composer.setSize(this.props.width, this.props.height);
       }

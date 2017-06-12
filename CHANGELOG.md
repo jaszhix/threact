@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.3.1
+
+ * Fixed the canvas element's style not updating on style prop change.
+
 ### v0.3.0
 
  * Removed unused refs on the instance elements that were triggering React errors.
