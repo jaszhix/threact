@@ -353,6 +353,9 @@ each(threeComponents, (component)=>{
       this.props[key].add(this.instance);
     }
     injectProps(child){
+      if (!child) {
+        return null;
+      }
       let el = React.cloneElement(child, {
         parent: this.instance,
         addCallback: this.isRenderer ? this.addCallback : this.props.addCallback ? this.props.addCallback : null,
