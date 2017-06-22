@@ -197,30 +197,21 @@ each(threeComponents, (component)=>{
       this.handleMountCallback()
     }
     componentDidMount() {
-      if (process.env.NODE_ENV === 'development') {
-        // react-hot-loader fix borrowed from react-three
-        if (this._reactInternalInstance._renderedComponent._currentElement !== null) {
-          this._reactInternalInstance._renderedComponent._renderedChildren = this._renderedChildren;
-        }
-      }
-      if (this.isRenderer) {
+      let checkDOM = ()=>{
         this.domElement = ReactDOM.findDOMNode(this);
+        if (!this.domElement) {
+          setTimeout(()=>checkDOM(), 500);
+          return;
+        }
         this.handleStyle(this.props);
         this.domElement.appendChild(this.instance.domElement);
         this.renderThree();
+      };
+
+      if (this.isRenderer) {
+        checkDOM();
       }
       this.handleAnimateCallback();
-    }
-    componentDidUpdate(prevProps, prevState) {
-      if (process.env.NODE_ENV === 'development') {
-        // react-hot-loader fix borrowed from react-three
-        if (this._reactInternalInstance._renderedComponent._currentElement !== null) {
-          this._reactInternalInstance._renderedComponent._renderedChildren = this._renderedChildren;
-        }
-        if (module.hot) {
-          this.unmountThree();
-        }
-      }
     }
     componentWillReceiveProps(nextProps) {
       if (!this.isRenderer) {
@@ -237,12 +228,6 @@ each(threeComponents, (component)=>{
       this.unmountThree();
     }
     unmountThree(){
-      if (process.env.NODE_ENV === 'development') {
-        // react-hot-loader fix borrowed from react-three
-        if (this._reactInternalInstance._renderedComponent._currentElement !== null) {
-          this._reactInternalInstance._renderedComponent._renderedChildren = this._renderedChildren;
-        }
-      }
       if (!this.isRenderer) {
         this.scene.remove(this.instance);
         if (typeof this.instance.dispose === 'function') {
@@ -388,9 +373,9 @@ each(threeComponents, (component)=>{
       let _children = [];
       each(children, (child, k)=>{
         _children.push(
-          <threact key={k}>
+          <threact-node key={k}>
             {this.injectProps(child)}
-          </threact>
+          </threact-node>
         )
       })
       return _children;
@@ -398,9 +383,9 @@ each(threeComponents, (component)=>{
     render(){
       let children = this.handleChildren();
       return (
-        <threact>
+        <threact-node>
           {children}
-        </threact>
+        </threact-node>
       );
     }
   }
