@@ -10,6 +10,9 @@
     "react-optimize"
   ],
   "plugins": [
+    "add-module-exports",
+    "dynamic-import-webpack",
+    "transform-decorators-legacy",
     "transform-object-rest-spread",
     "transform-class-properties",
     "transform-es2015-classes",
