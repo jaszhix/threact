@@ -1,6 +1,6 @@
-import 'expose-loader?React!react';
-import 'expose-loader?ReactDOM!react-dom';
-import 'expose-loader?THREE!three';
+import React from 'react';
+import ReactDOM from 'react-dom';
+import * as THREE from 'three';
 import autoBind from 'react-autobind';
 import {WebGL2Renderer} from 'three/src/renderers/WebGL2Renderer';
 THREE.WebGL2Renderer = WebGL2Renderer;
@@ -198,7 +198,7 @@ each(threeComponents, (component)=>{
     }
     componentDidMount() {
       let checkDOM = ()=>{
-        this.domElement = ReactDOM.findDOMNode(this);
+        this.domElement = this.refs.renderer;
         if (!this.domElement) {
           setTimeout(()=>checkDOM(), 500);
           return;
@@ -318,7 +318,7 @@ each(threeComponents, (component)=>{
       if (typeof this.props.onMount === 'function') {
         this.props.onMount({
           instance: this.instance,
-          renderer: this.renderer,
+          renderer: this.isRenderer ? this.instance : this.renderer,
           scene: this.scene,
           camera: this.camera,
           controls: this.controls,
@@ -383,7 +383,7 @@ each(threeComponents, (component)=>{
     render(){
       let children = this.handleChildren();
       return (
-        <threact-node>
+        <threact-node ref={this.isRenderer ? 'renderer' : null}>
           {children}
         </threact-node>
       );
