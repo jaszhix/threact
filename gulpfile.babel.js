@@ -1,4 +1,6 @@
 import gulp from 'gulp';
+import babel from 'gulp-babel';
+import del from 'del';
 import path from 'path';
 import cache from 'gulp-cached';
 import { log, PluginError, colors } from 'gulp-util';
@@ -8,6 +10,12 @@ import minimist from 'minimist';
 function emptyTask(done) {
   done();
 }
+
+gulp.task('clean-dist', () => del(['dist/']));
+
+gulp.task('babel', gulp.series('clean-dist', () => gulp.src(['src/**/**/*.js'])
+  .pipe(babel(require('./package.json').babel))
+  .pipe(gulp.dest('dist/'))), emptyTask);
 
 function karma(options) {
   return function karmaTask(done) {
@@ -49,6 +57,7 @@ gulp.task('karma-src', karmaSingle({
 gulp.task('karma', gulp.series('karma-src'), emptyTask);
 
 gulp.task('test', gulp.series(
+  'babel',
   'karma',
 ), emptyTask);
 

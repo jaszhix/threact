@@ -13,7 +13,7 @@
     "watch": "watch 'npm run build' src",
     "test": "gulp test",
     "prebuild": "npm run clean -s",
-    "build": "node --trace-warnings -r babel-register ./node_modules/webpack/bin/webpack --config webpack.config.js --progress --profile --bail",
+    "build": "gulp babel",
     "prepublish": "npm run build",
     "deploy": "git pull --rebase origin master && git push origin master",
     "patch": "npm version patch && npm publish",
@@ -21,6 +21,33 @@
     "major": "npm version major && npm publish",
     "postpublish": "git push origin master --follow-tags",
     "toc": "doctoc --github --title \"# Changelog\" CHANGELOG.md"
+  },
+  "babel": {
+    "presets": [
+      "es2015",
+      "stage-0",
+      "react"
+    ],
+    "plugins": [
+      "add-module-exports",
+      "dynamic-import-webpack",
+      "transform-decorators-legacy",
+      "transform-object-rest-spread",
+      "transform-class-properties",
+      "transform-es2015-classes",
+      [
+        "transform-runtime",
+        {
+          "helpers": false,
+          "polyfill": false,
+          "regenerator": true
+        }
+      ]
+    ],
+    "ignore": [
+      "./test/test.js",
+      "./dist/index.js"
+    ]
   },
   "repository": {
     "type": "git",
@@ -69,6 +96,7 @@
     "chai": "^3.4.1",
     "chai-as-promised": "^5.3.0",
     "coveralls": "*",
+    "del": "2.2.2",
     "dependency-check": "*",
     "dirty-chai": "^1.2.2",
     "doctoc": "*",
@@ -78,6 +106,7 @@
     "exports-loader": "^0.6.3",
     "expose-loader": "^0.7.3",
     "gulp": "gulpjs/gulp#4.0",
+    "gulp-babel": "6.1.2",
     "gulp-cached": "^1.1.1",
     "gulp-util": "3.0.8",
     "imports-loader": "^0.6.5",
