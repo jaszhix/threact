@@ -15,6 +15,7 @@ import CreateControls from 'orbit-controls';
 import _ from 'lodash';
 import each from './each';
 import defaults from './defaults';
+import {controlsProps, rendererProps, sceneProps, cameraProps, nonParamProps} from './static';
 
 const threeComponents = Object.keys(THREE);
 const components = {};
@@ -35,7 +36,7 @@ each(threeComponents, (component)=>{
   if (typeof THREE[component] !== 'function') {
     return;
   }
-  components[component] = class extends React.PureComponent {
+  components[component] = class extends React.Component {
     static displayName = component;
     static defaultProps = {
       width: window.innerWidth,
@@ -55,20 +56,17 @@ each(threeComponents, (component)=>{
       this.moduleParams = getParamNames(THREE[component]);
       this.isRenderer = false;
       this.stats = null;
-      this.controlsProps = ['onMouseMove', 'onMouseDown', 'onResize', 'onKeyUp', 'onKeyPress', 'onKeyDown'];
-
       this.init();
     }
-    init(){
+    init() {
       let pureProps = {};
       let setProps = {};
-      let rendererProps = ['canvas', 'context', 'precision', 'alpha', 'premultipliedAlpha', 'antialias', 'stencil', 'preserveDrawingBuffer', 'depth', 'logarithmicDepthBuffer'];
-      let sceneProps = ['fog', 'overrideMaterial', 'autoUpdate'];
-      let cameraProps = ['layers', 'matrixWorldInverse', 'projectionMatrix'];
-      let nonParamProps = ['deferred', 'stats', 'shaders', 'passes', 'parent', 'renderer', 'scene', 'camera', 'controls', 'skybox', 'anisotropy', 'onAnimate', 'onMount', 'name', 'children', 'addCallback', 'width', 'height', 'style'];
 
       each(this.props, (value, key)=>{
-        if ((nonParamProps.indexOf(key) === -1 && cameraProps.indexOf(key) === -1 && this.controlsProps.indexOf(key) === -1) || (!this.isRenderer && defaults[component] && typeof defaults[component][key] !== 'undefined')) {
+        if ((nonParamProps.indexOf(key) === -1
+          && cameraProps.indexOf(key) === -1
+          && controlsProps.indexOf(key) === -1)
+          || (!this.isRenderer && defaults[component] && typeof defaults[component][key] !== 'undefined')) {
           if (key.slice(0, 3) === 'set') {
             setProps[key] = value;
           } else {
@@ -143,7 +141,7 @@ each(threeComponents, (component)=>{
         });
         this.controls.needsUpdate = true;
         this.target = new THREE.Vector3();
-        each(this.controlsProps, (propKey)=>{
+        each(controlsProps, (propKey)=>{
           if (propKey === 'onResize') {
             window.addEventListener('resize', this.handleResize);
           }
@@ -198,7 +196,6 @@ each(threeComponents, (component)=>{
     }
     componentDidMount() {
       let checkDOM = ()=>{
-        this.domElement = this.refs.renderer;
         if (!this.domElement) {
           setTimeout(()=>checkDOM(), 500);
           return;
@@ -224,18 +221,18 @@ each(threeComponents, (component)=>{
         this.handleStyle(nextProps);
       }
     }
-    componentWillUnmount(){
+    componentWillUnmount() {
       this.unmountThree();
     }
-    unmountThree(){
+    unmountThree() {
       if (!this.isRenderer) {
         this.scene.remove(this.instance);
         if (typeof this.instance.dispose === 'function') {
           this.instance.dispose();
         }
         return;
-      } else
-      each(this.controlsProps, (propKey)=>{
+      }
+      each(controlsProps, (propKey)=>{
         if (typeof this.props[propKey] === 'function') {
           window.removeEventListener(propKey.slice(2).toLowerCase(), this.props[propKey]);
           if (propKey === 'onResize') {
@@ -244,7 +241,7 @@ each(threeComponents, (component)=>{
         }
       });
     }
-    renderThree(time){
+    renderThree(time) {
       window.requestAnimationFrame(this.renderThree);
       if (this.stats !== null) {
         this.stats.begin();
@@ -268,13 +265,13 @@ each(threeComponents, (component)=>{
         this.stats.end();
       }
     }
-    handleStyle(props){
+    handleStyle(props) {
       let style = Object.assign({width: props.width, height: props.height}, props.style);
       each(style, (value, key)=>{
         this.instance.domElement.style[key] = value;
       });
     }
-    handleResize(){
+    handleResize() {
       this.instance.setSize(this.props.width, this.props.height);
       this.handleStyle(this.props);
 
@@ -283,7 +280,7 @@ each(threeComponents, (component)=>{
       }
       this.updateControls();
     }
-    updateControls(){
+    updateControls() {
       if (typeof this.props.updateControls === 'function') {
         this.props.updateControls(this);
         return;
@@ -308,13 +305,13 @@ each(threeComponents, (component)=>{
       this.camera.updateProjectionMatrix()
       this.camera.updateMatrixWorld();
     }
-    setTarget(vector3){
+    setTarget(vector3) {
       this.target.copy(vector3);
     }
-    addCallback(cb){
+    addCallback(cb) {
       this.callbacks.push(cb)
     }
-    handleMountCallback(){
+    handleMountCallback() {
       if (typeof this.props.onMount === 'function') {
         this.props.onMount({
           instance: this.instance,
@@ -326,18 +323,18 @@ each(threeComponents, (component)=>{
         });
       }
     }
-    handleAnimateCallback(){
+    handleAnimateCallback() {
       if (typeof this.props.onAnimate === 'function') {
         this.onAnimateCallback = this.props.onAnimate
         let addCallback = this.isRenderer ? this.addCallback : this.props.addCallback;
         addCallback({params: this, cb: this.onAnimateCallback});
       }
     }
-    addToParent(){
+    addToParent() {
       let key = this.props.parent.hasOwnProperty('domElement') ? 'scene' : 'parent';
       this.props[key].add(this.instance);
     }
-    injectProps(child){
+    injectProps(child) {
       if (!child) {
         return null;
       }
@@ -352,7 +349,7 @@ each(threeComponents, (component)=>{
       });
       return el;
     }
-    handleChildren(){
+    handleChildren() {
       let children = this.props.children;
       let arrayChildren = [];
       each(children, (child, i)=>{
@@ -380,10 +377,13 @@ each(threeComponents, (component)=>{
       })
       return _children;
     }
-    render(){
+    getRef(ref) {
+      this.domElement = ref;
+    }
+    render() {
       let children = this.handleChildren();
       return (
-        <threact-node ref={this.isRenderer ? 'renderer' : null}>
+        <threact-node ref={this.getRef}>
           {children}
         </threact-node>
       );

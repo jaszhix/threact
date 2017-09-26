@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.4.4
+
+ * Switch to using ref callbacks.
+ * Minor clean up.
+
 ### v0.3.1
 
  * Fixed the canvas element's style not updating on style prop change.
