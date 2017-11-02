@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import * as THREE from 'three';
-import autoBind from 'react-autobind';
 import {WebGL2Renderer} from 'three/src/renderers/WebGL2Renderer';
 THREE.WebGL2Renderer = WebGL2Renderer;
 import Stats from 'stats.js';
@@ -12,7 +11,7 @@ import CopyShader from './libs/CopyShader';
 import WebGLDeferredRenderer from './libs/WebGLDeferredRenderer';
 THREE.WebGLDeferredRenderer = WebGLDeferredRenderer;
 import CreateControls from 'orbit-controls';
-import _ from 'lodash';
+import {isEqual} from 'lodash.isequal';
 import each from './each';
 import defaults from './defaults';
 import {controlsProps, rendererProps, sceneProps, cameraProps, nonParamProps} from './static';
@@ -47,7 +46,6 @@ each(threeComponents, (component)=>{
     }
     constructor(props) {
       super(props);
-      autoBind(this);
 
       if (this.props.deferred) {
         component = 'WebGLDeferredRenderer';
@@ -58,7 +56,7 @@ each(threeComponents, (component)=>{
       this.stats = null;
       this.init();
     }
-    init() {
+    init = () => {
       let pureProps = {};
       let setProps = {};
 
@@ -217,14 +215,14 @@ each(threeComponents, (component)=>{
       if (nextProps.height !== this.props.height || nextProps.width !== this.props.width) {
         this.handleResize();
       }
-      if (!_.isEqual(nextProps.style, this.props.style)) {
+      if (!isEqual(nextProps.style, this.props.style)) {
         this.handleStyle(nextProps);
       }
     }
     componentWillUnmount() {
       this.unmountThree();
     }
-    unmountThree() {
+    unmountThree = () => {
       if (!this.isRenderer) {
         this.scene.remove(this.instance);
         if (typeof this.instance.dispose === 'function') {
@@ -241,7 +239,7 @@ each(threeComponents, (component)=>{
         }
       });
     }
-    renderThree(time) {
+    renderThree = (time) => {
       window.requestAnimationFrame(this.renderThree);
       if (this.stats !== null) {
         this.stats.begin();
@@ -265,13 +263,13 @@ each(threeComponents, (component)=>{
         this.stats.end();
       }
     }
-    handleStyle(props) {
+    handleStyle = (props) => {
       let style = Object.assign({width: props.width, height: props.height}, props.style);
       each(style, (value, key)=>{
         this.instance.domElement.style[key] = value;
       });
     }
-    handleResize() {
+    handleResize = () => {
       this.instance.setSize(this.props.width, this.props.height);
       this.handleStyle(this.props);
 
@@ -280,7 +278,7 @@ each(threeComponents, (component)=>{
       }
       this.updateControls();
     }
-    updateControls() {
+    updateControls = () => {
       if (typeof this.props.updateControls === 'function') {
         this.props.updateControls(this);
         return;
@@ -305,13 +303,13 @@ each(threeComponents, (component)=>{
       this.camera.updateProjectionMatrix()
       this.camera.updateMatrixWorld();
     }
-    setTarget(vector3) {
+    setTarget = (vector3) => {
       this.target.copy(vector3);
     }
-    addCallback(cb) {
+    addCallback = (cb) => {
       this.callbacks.push(cb)
     }
-    handleMountCallback() {
+    handleMountCallback = () => {
       if (typeof this.props.onMount === 'function') {
         this.props.onMount({
           instance: this.instance,
@@ -323,18 +321,18 @@ each(threeComponents, (component)=>{
         });
       }
     }
-    handleAnimateCallback() {
+    handleAnimateCallback = () => {
       if (typeof this.props.onAnimate === 'function') {
         this.onAnimateCallback = this.props.onAnimate
         let addCallback = this.isRenderer ? this.addCallback : this.props.addCallback;
         addCallback({params: this, cb: this.onAnimateCallback});
       }
     }
-    addToParent() {
+    addToParent = () => {
       let key = this.props.parent.hasOwnProperty('domElement') ? 'scene' : 'parent';
       this.props[key].add(this.instance);
     }
-    injectProps(child) {
+    injectProps = (child) => {
       if (!child) {
         return null;
       }
@@ -349,7 +347,7 @@ each(threeComponents, (component)=>{
       });
       return el;
     }
-    handleChildren() {
+    handleChildren = () => {
       let children = this.props.children;
       let arrayChildren = [];
       each(children, (child, i)=>{
@@ -358,8 +356,8 @@ each(threeComponents, (component)=>{
         }
       });
       each(arrayChildren, (child)=>{
-        children = _.concat(children, child.children);
-        _.pullAt(children, child.key);
+        children = children.concat(child.children);
+        children.splice(child.key, 1);
       });
       if (!children) {
         return null;
@@ -377,7 +375,7 @@ each(threeComponents, (component)=>{
       })
       return _children;
     }
-    getRef(ref) {
+    getRef = (ref) => {
       this.domElement = ref;
     }
     render() {
