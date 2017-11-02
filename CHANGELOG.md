@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.4.6
+
+ * Updated three to v0.88.0.
+ * Fixed a typo with importing lodash.isequal.
+
 ### v0.4.5
 
  * Cleaned up dependency bloat.

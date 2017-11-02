@@ -11,7 +11,7 @@ import CopyShader from './libs/CopyShader';
 import WebGLDeferredRenderer from './libs/WebGLDeferredRenderer';
 THREE.WebGLDeferredRenderer = WebGLDeferredRenderer;
 import CreateControls from 'orbit-controls';
-import {isEqual} from 'lodash.isequal';
+import isEqual from 'lodash.isequal';
 import each from './each';
 import defaults from './defaults';
 import {controlsProps, rendererProps, sceneProps, cameraProps, nonParamProps} from './static';
