@@ -1,8 +1,12 @@
 # Changelog
 
+### v0.4.5
+
+ * Cleaned up dependency bloat.
+
 ### v0.4.4
 
- * Switch to using ref callbacks.
+ * Switched to using ref callbacks.
  * Minor clean up.
 
 ### v0.3.1
