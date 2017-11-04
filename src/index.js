@@ -225,10 +225,14 @@ each(threeComponents, (component)=>{
     unmountThree = () => {
       if (!this.isRenderer) {
         this.scene.remove(this.instance);
-        if (typeof this.instance.dispose === 'function') {
+        if (this.instance.dispose) {
           this.instance.dispose();
         }
         return;
+      }
+      window.cancelAnimationFrame(this.renderId);
+      if (this.instance.dispose) {
+        this.instance.dispose();
       }
       each(controlsProps, (propKey)=>{
         if (typeof this.props[propKey] === 'function') {
@@ -240,7 +244,7 @@ each(threeComponents, (component)=>{
       });
     }
     renderThree = (time) => {
-      window.requestAnimationFrame(this.renderThree);
+      this.renderId = window.requestAnimationFrame(this.renderThree);
       if (this.stats !== null) {
         this.stats.begin();
       }

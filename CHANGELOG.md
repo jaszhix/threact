@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.4.7
+
+ * Ensure renderer instances and animation callbacks are finalized on component unmount.
+
 ### v0.4.6
 
  * Updated three to v0.88.0.
