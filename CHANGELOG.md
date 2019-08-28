@@ -1,5 +1,11 @@
 # Changelog
 
+### v0.5.0
+
+ * Updated dependencies, and bumped Three.js to v0.101.0. v0.102.0 onwards breaks WebGLDeferredRenderer, so it is being held back until that is fixed.
+ * Removed usage of deprecated React lifecycle methods, `componentWillMount`, and `componentWillReceiveProps`.
+ * Minor clean up.
+
 ### v0.4.7
 
  * Ensure renderer instances and animation callbacks are finalized on component unmount.

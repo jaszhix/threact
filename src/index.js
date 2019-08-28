@@ -12,7 +12,7 @@ import WebGLDeferredRenderer from './libs/WebGLDeferredRenderer';
 THREE.WebGLDeferredRenderer = WebGLDeferredRenderer;
 import CreateControls from 'orbit-controls';
 import isEqual from 'lodash.isequal';
-import each from './each';
+import {each, tryFn} from '@jaszhix/utils';
 import defaults from './defaults';
 import {controlsProps, rendererProps, sceneProps, cameraProps, nonParamProps} from './static';
 
@@ -35,6 +35,7 @@ each(threeComponents, (component)=>{
   if (typeof THREE[component] !== 'function') {
     return;
   }
+
   components[component] = class extends React.Component {
     static displayName = component;
     static defaultProps = {
@@ -44,6 +45,7 @@ each(threeComponents, (component)=>{
       stats: null,
       deferred: false
     }
+
     constructor(props) {
       super(props);
 
@@ -59,6 +61,11 @@ each(threeComponents, (component)=>{
     init = () => {
       let pureProps = {};
       let setProps = {};
+      let instance;
+      let instanceProps = [];
+      let params = [];
+
+      this.callbacks = [];
 
       each(this.props, (value, key)=>{
         if ((nonParamProps.indexOf(key) === -1
@@ -73,11 +80,9 @@ each(threeComponents, (component)=>{
         }
       });
 
-      let instance;
       if (this.moduleParams.length === 0) {
         instance = new THREE[component]();
       } else {
-        let params = [];
         each(this.moduleParams, (param)=>{
           if (typeof pureProps[param] !== 'undefined') {
             params.push(pureProps[param]);
@@ -90,46 +95,49 @@ each(threeComponents, (component)=>{
         } else {
           instance = new THREE[component](...params);
         }
+
         this.isRenderer = instance.hasOwnProperty('domElement');
-        let instanceProps = [];
+
         each(pureProps, (value, key)=>{
           if ((!this.isRenderer && this.moduleParams.indexOf(key) === -1) || (this.isRenderer && rendererProps.indexOf(key) === -1)) {
             instanceProps.push(key);
           }
         });
         each(instanceProps, (prop)=>{
-          try {
+          tryFn(() => {
             if (Array.isArray(pureProps[prop])) {
               instance[prop].set(...pureProps[prop]);
             } else {
               throw new Error();
             }
-          } catch (e) {
-            instance[prop] = pureProps[prop];
-          }
+          }, () => instance[prop] = pureProps[prop]);
         });
       }
+
       this.instance = instance;
 
       if (this.isRenderer) {
         this.anisotropy = this.props.anisotropy ? this.props.anisotropy : null//instance.getMaxAnisotropy();
         each(setProps, (value, key)=>{
-          try {
-            instance[key](...value);
-          } catch (e) {}
+          tryFn(() => instance[key](...value));
         });
+
         this.scene = new THREE.Scene();
+
         each(sceneProps, (propKey)=>{
           if (typeof this.props[propKey] !== 'undefined') {
             this.scene[propKey] = this.props[propKey]
           }
         });
+
         this.camera = this.props.camera || new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+
         each(cameraProps, (propKey)=>{
           if (typeof this.props[propKey] !== 'undefined') {
             this.camera[propKey] = this.props[propKey]
           }
         });
+
         this.controls = this.props.controls ? this.props.controls : CreateControls({
           element: this.instance.domElement,
           distanceBounds: [1, 10000],
@@ -137,8 +145,11 @@ each(threeComponents, (component)=>{
           phi: 70 * Math.PI / 180,
           zoomSpeed: 0.7
         });
+
         this.controls.needsUpdate = true;
+
         this.target = new THREE.Vector3();
+
         each(controlsProps, (propKey)=>{
           if (propKey === 'onResize') {
             window.addEventListener('resize', this.handleResize);
@@ -148,11 +159,12 @@ each(threeComponents, (component)=>{
             domElement.addEventListener(propKey.slice(2).toLowerCase(), this.props[propKey]);
           }
         });
-        this.callbacks = [];
+
         if (this.props.shaders || this.props.passes) {
           this.usesComposer = true;
           this.composer = new EffectComposer(this.instance);
           this.composer.addPass(new RenderPass(this.scene, this.camera));
+
           if (Array.isArray(this.props.shaders) && this.props.shaders.length > 0) {
             this.shaders = this.props.shaders;
             each(this.shaders, (shader)=>{
@@ -161,6 +173,7 @@ each(threeComponents, (component)=>{
               this.composer.addPass(copyPass);
             });
           }
+
           if (Array.isArray(this.props.passes) && this.props.passes.length > 0) {
             this.passes = this.props.passes;
             each(this.passes, (pass)=>{
@@ -168,11 +181,9 @@ each(threeComponents, (component)=>{
             });
           }
         }
-        if (this.props.skybox && Array.isArray(this.props.skybox)) {
-          var textureCube = new THREE.CubeTextureLoader().load(this.props.skybox);
-          textureCube.anisotropy = this.anisotropy;
-          this.scene.background = textureCube;
-        }
+
+        this.handleSkyBox();
+
         if (this.props.stats !== null) {
           this.stats = new Stats();
           this.stats.showPanel(this.props.stats);
@@ -185,17 +196,26 @@ each(threeComponents, (component)=>{
         this.controls = this.props.controls;
         this.addToParent('parent');
       }
+
       if (this.props.name) {
         this.instance.name = this.props.name;
       }
-    }
-    componentWillMount() {
-      this.handleMountCallback()
+
+      if (typeof this.props.onMount === 'function') {
+        this.props.onMount({
+          instance: this.instance,
+          renderer: this.isRenderer ? this.instance : this.renderer,
+          scene: this.scene,
+          camera: this.camera,
+          controls: this.controls,
+          target: this.target
+        });
+      }
     }
     componentDidMount() {
       let checkDOM = ()=>{
         if (!this.domElement) {
-          setTimeout(()=>checkDOM(), 500);
+          setTimeout(() => checkDOM(), 500);
           return;
         }
         this.handleStyle(this.props);
@@ -208,15 +228,19 @@ each(threeComponents, (component)=>{
       }
       this.handleAnimateCallback();
     }
-    componentWillReceiveProps(nextProps) {
-      if (!this.isRenderer) {
-        return;
-      }
-      if (nextProps.height !== this.props.height || nextProps.width !== this.props.width) {
+    componentDidUpdate(prevProps) {
+      if (!this.isRenderer) return;
+
+      if (prevProps.height !== this.props.height || prevProps.width !== this.props.width) {
         this.handleResize();
       }
-      if (!isEqual(nextProps.style, this.props.style)) {
-        this.handleStyle(nextProps);
+
+      if (prevProps.skybox !== this.props.skybox) {
+        this.handleSkyBox();
+      }
+
+      if (!isEqual(prevProps.style, this.props.style)) {
+        this.handleStyle(this.props);
       }
     }
     componentWillUnmount() {
@@ -230,7 +254,9 @@ each(threeComponents, (component)=>{
         }
         return;
       }
+
       window.cancelAnimationFrame(this.renderId);
+
       if (this.instance.dispose) {
         this.instance.dispose();
       }
@@ -245,10 +271,13 @@ each(threeComponents, (component)=>{
     }
     renderThree = (time) => {
       this.renderId = window.requestAnimationFrame(this.renderThree);
-      if (this.stats !== null) {
+
+      if (this.stats != null) {
         this.stats.begin();
       }
+
       this.updateControls();
+
       if (this.callbacks && this.callbacks.length > 0) {
         each(this.callbacks, (cbObject)=>{
           if (Array.isArray(cbObject.param)) {
@@ -258,13 +287,30 @@ each(threeComponents, (component)=>{
           }
         });
       }
+
       if (this.usesComposer) {
         this.composer.render()
       } else {
         this.instance.render(this.scene, this.camera);
       }
-      if (this.stats !== null) {
+
+      if (this.stats != null) {
         this.stats.end();
+      }
+    }
+    handleSkyBox = () => {
+      const {skybox} = this.props;
+
+      if (this.scene.background) this.scene.background.dispose();
+
+      if (skybox && Array.isArray(skybox)) {
+        let textureCube = new THREE.CubeTextureLoader().load(this.props.skybox);
+        textureCube.anisotropy = this.anisotropy;
+        this.scene.background = textureCube;
+      } else {
+        if (this.scene.background) this.scene.background.dispose();
+
+        this.scene.background = null;
       }
     }
     handleStyle = (props) => {
@@ -313,18 +359,6 @@ each(threeComponents, (component)=>{
     addCallback = (cb) => {
       this.callbacks.push(cb)
     }
-    handleMountCallback = () => {
-      if (typeof this.props.onMount === 'function') {
-        this.props.onMount({
-          instance: this.instance,
-          renderer: this.isRenderer ? this.instance : this.renderer,
-          scene: this.scene,
-          camera: this.camera,
-          controls: this.controls,
-          target: this.target
-        });
-      }
-    }
     handleAnimateCallback = () => {
       if (typeof this.props.onAnimate === 'function') {
         this.onAnimateCallback = this.props.onAnimate
@@ -337,9 +371,8 @@ each(threeComponents, (component)=>{
       this.props[key].add(this.instance);
     }
     injectProps = (child) => {
-      if (!child) {
-        return null;
-      }
+      if (!child) return null;
+
       let el = React.cloneElement(child, {
         parent: this.instance,
         addCallback: this.isRenderer ? this.addCallback : this.props.addCallback ? this.props.addCallback : null,
@@ -349,27 +382,31 @@ each(threeComponents, (component)=>{
         controls: this.isRenderer ? this.controls : this.props.controls ? this.props.controls : null,
         anisotropy: this.isRenderer ? this.anisotropy : this.props.anisotropy ? this.props.anisotropy : null,
       });
+
       return el;
     }
     handleChildren = () => {
       let children = this.props.children;
+      let _children = [];
       let arrayChildren = [];
+
       each(children, (child, i)=>{
         if (Array.isArray(child)) {
           arrayChildren.push({children: child, key: i});
         }
       });
+
       each(arrayChildren, (child)=>{
         children = children.concat(child.children);
         children.splice(child.key, 1);
       });
-      if (!children) {
-        return null;
-      }
+
+      if (!children) return null;
+
       if (!Array.isArray(children)) {
         children = [children];
       }
-      let _children = [];
+
       each(children, (child, k)=>{
         _children.push(
           <threact-node key={k}>
@@ -377,6 +414,7 @@ each(threeComponents, (component)=>{
           </threact-node>
         )
       })
+
       return _children;
     }
     getRef = (ref) => {
@@ -384,6 +422,7 @@ each(threeComponents, (component)=>{
     }
     render() {
       let children = this.handleChildren();
+
       return (
         <threact-node ref={this.getRef}>
           {children}
